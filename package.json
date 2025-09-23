@@ -1,11 +1,16 @@
 {
   "name": "tateti-server",
+  "type": "module",
   "version": "1.0.0",
   "main": "tateti.js",
   "scripts": {
-    "start": "node tateti.js"
+    "start": "node tateti.js",
+  "test": "jest"
   },
   "dependencies": {
     "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "jest": "^30.1.3"
   }
 }
