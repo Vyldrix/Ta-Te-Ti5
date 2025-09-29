@@ -1,6 +1,6 @@
 
-const { posicionesVacias } = require('../tateti');
-const { elegirPosicion } = require('../tateti');
+const { posicionesVacias } = require('../tateti-random');
+const { elegirPosicion } = require('../tateti-random');
 
 describe('elegirPosicion', () => {
     it('debe devolver una posición válida del array', () => {
