@@ -42,6 +42,7 @@ function elegirPosicion(posiciones) {
 }
 
 function posicionesVacias(board) {
+  console.log(board);
   return board
     .map((value, index) => (value === 0 ? index : null))
     .filter((index) => index !== null);

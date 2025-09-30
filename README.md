@@ -37,7 +37,7 @@ En GitHub entra a **Settings > Secrets and variables > Actions** y agrega los si
 
 Si tu aplicacion necesita variables de entorno, definalas en Vercel (`vercel env add` o desde el dashboard) o agrega pasos adicionales en el workflow.
 
-### 4. Disparar el workflow
+### 4. Disparar el workflow a mano (no debería hacer falta con GitHub Actions)
 Con los secretos configurados, haz *push* a `main`. GitHub Actions ejecuta:
 1. `npm ci`
 2. `npm test`
