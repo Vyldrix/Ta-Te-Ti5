@@ -40,4 +40,11 @@ describe('posicionesVacias', () => {
         const board = [1,2,1,2,1,2,1,2,0];
     expect(posicionesVacias(board)).toEqual([8]);
     });
+
+    it('Un test que falla', () => {
+        const board = [1,2,1,2,1,2,1,2,0];
+    expect(posicionesVacias(board)).toEqual([5]);
+    });
+
+
 });
