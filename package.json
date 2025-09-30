@@ -1,6 +1,5 @@
 {
   "name": "tateti-random",
-  "type": "module",
   "version": "1.0.0",
   "main": "tateti-random.js",
   "scripts": {

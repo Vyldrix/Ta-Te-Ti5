@@ -45,7 +45,7 @@ Con los secretos configurados, haz *push* a `main`. GitHub Actions ejecuta:
 4. `npx vercel build --prod`
 5. `npx vercel deploy --prebuilt --prod`
 
-Al finalizar veras la URL de despliegue en la pestana **Actions** del repositorio y en el dashboard de Vercel.
+Al finalizar vas a ver la URL de despliegue en la pestana **Actions** del repositorio y en el dashboard de Vercel.
 
 ## Personalizacion
 - Para desplegar desde otra rama, cambia la seccion `on.push.branches` del workflow.
@@ -54,9 +54,3 @@ Al finalizar veras la URL de despliegue en la pestana **Actions** del repositori
 ## Scripts utiles
 - `npm start`: inicia el servidor.
 - `npm test`: ejecuta Jest.
-## Consumo en Vercel
-Con `vercel.json` todas las rutas se redirigen a `api/index.js`, que reutiliza la app de Express. Una vez desplegado podés invocar el endpoint principal con `/move`:
-```bash
-curl "https://<tu-subdominio>.vercel.app/move?board=%5B0,1,0,2,0,0,0,0,0%5D"
-```
-Reemplaza `<tu-subdominio>` por la URL de tu proyecto (por ejemplo `tateti-random-4rlfoobke-cguardia-9462s-projects`).
