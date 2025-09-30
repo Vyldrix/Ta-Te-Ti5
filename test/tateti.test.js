@@ -38,7 +38,7 @@ describe('posicionesVacias', () => {
 
     it('debe funcionar con un solo espacio vacío', () => {
         const board = [1,2,1,2,1,2,1,2,0];
-    expect(posicionesVacias(board)).toEqual([7]);
+    expect(posicionesVacias(board)).toEqual([8]);
     });
 
 
