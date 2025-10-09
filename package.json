@@ -1,21 +1,19 @@
 {
-  "name": "tateti-random",
+  "name": "tateti-5x5-bot",
   "version": "1.0.0",
-  "main": "tateti-random.js",
+  "description": "Bot de Tateti 5x5 con Minimax y poda alfa-beta",
+  "main": "API/index.js",
   "scripts": {
-    "start": "node tateti-random.js",
-    "test": "jest"
+    "start": "node API/index.js",
+    "dev": "node API/index.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "express": "^4.18.2"
   },
   "devDependencies": {
     "jest": "^29.7.0"
-  },
-  "jest": {
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "/.vercel/"
-    ]
   }
 }
