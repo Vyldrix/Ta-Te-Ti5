@@ -8,7 +8,7 @@ app.use(express.json());
 /**
  * ENDPOINT PRINCIPAL - Adaptado para 5x5 con 4 en línea
  * GET /move?board=[[...],[...]]&symbol=X
- * 
+ * l
  * El board ahora es una matriz 5x5 (no array de 9)
  * Ejemplo: [[0,0,1,0,0],[0,2,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
  * 0 = vacío, 1 = X, 2 = O
