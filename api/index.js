@@ -7,76 +7,56 @@ app.use(express.json());
 
 /**
  * ENDPOINT PRINCIPAL - Adaptado para 5x5 con 4 en línea
- * GET /move?board=[[...],[...]]&symbol=X
- * l
- * El board ahora es una matriz 5x5 (no array de 9)
- * Ejemplo: [[0,0,1,0,0],[0,2,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
- * 0 = vacío, 1 = X, 2 = O
+ * GET /move?board=[[...],[...]]&player=1
+ *
+ * El árbitro envía:
+ *  - board: array plano de 25 posiciones (no matriz)
+ *  - player: 1 o 2
  */
 app.get('/move', (req, res) => {
-  const boardParam = req.query.board;
-  const symbolParam = req.query.symbol || '1'; // Por defecto juega como 1 (X)
-  let board;
-
-  if (typeof boardParam === 'undefined') {
-    return res.status(400).json({ 
-      error: 'Parametro board requerido. Debe enviarse como array JSON 5x5.' 
-    });
-  }
-
   try {
-    board = JSON.parse(boardParam);
-  } catch (error) {
-    return res.status(400).json({ 
-      error: 'Parametro board invalido. Debe ser un array JSON.' 
-    });
-  }
+    let boardParam = req.query.board;
+    let playerId = parseInt(req.query.player, 10);
 
-  // Validar que sea 5x5
-  if (!Array.isArray(board) || board.length !== 5) {
-    return res.status(400).json({ 
-      error: 'El tablero debe ser un array de 5 filas.' 
-    });
-  }
+    if (!boardParam) {
+      return res.status(400).json({ error: 'Parametro board requerido' });
+    }
 
-  if (!board.every(row => Array.isArray(row) && row.length === 5)) {
-    return res.status(400).json({ 
-      error: 'Cada fila debe tener 5 columnas.' 
-    });
-  }
+    if (Array.isArray(boardParam)) {
+      boardParam = boardParam[0]; // por si llega repetido
+    }
 
-  // Convertir board numérico (0,1,2) a formato del bot ('','X','O')
-  const boardForBot = convertirTablero(board);
+    const board = JSON.parse(boardParam);
 
-  // Determinar símbolo del bot
-  const botSymbol = symbolParam === '1' ? 'X' : 'O';
+    if (!Array.isArray(board) || board.length !== 25) {
+      return res.status(400).json({ error: 'El tablero debe ser un array plano de 25 celdas' });
+    }
 
-  // Verificar si hay movimientos disponibles
-  const emptyPositions = posicionesVacias(boardForBot);
-  if (emptyPositions.length === 0) {
-    return res.status(400).json({ 
-      error: 'No hay movimientos disponibles.' 
-    });
-  }
+    // Convertir array plano a matriz 5x5
+    const board5x5 = [];
+    for (let i = 0; i < 5; i++) {
+      board5x5.push(board.slice(i * 5, i * 5 + 5));
+    }
 
-  try {
-    // Usar el bot inteligente
+    // Determinar símbolo del bot
+    const botSymbol = playerId === 1 ? 'X' : 'O';
+    const boardForBot = convertirTablero(board5x5);
+
+    // Calcular mejor movimiento
     const move = getBestMove(boardForBot, botSymbol);
-    
-    // Convertir a índice lineal (0-24) para compatibilidad
-    const movimientoLineal = move.row * 5 + move.col;
-    
-    return res.json({ 
-      movimiento: movimientoLineal,  // Índice de 0 a 24
-      fila: move.row,                 // Fila de 0 a 4
-      columna: move.col,              // Columna de 0 a 4
-      posicion: { row: move.row, col: move.col }
-    });
+
+    // Convertir a índice lineal (0-24) para el árbitro
+    const linearMove = move.row * 5 + move.col;
+
+    // ✅ SOLO devolver "move", lo que entiende el árbitro
+    return res.json({ move: linearMove });
+
+    // 🔹 Alternativa: si prefieres coordenadas
+    // return res.json({ move: { row: move.row, col: move.col } });
+
   } catch (error) {
-    return res.status(500).json({ 
-      error: 'Error al calcular movimiento',
-      detalles: error.message 
-    });
+    console.error("Error en /move:", error.message);
+    return res.status(500).json({ error: 'Error al calcular movimiento', detalles: error.message });
   }
 });
 
@@ -87,7 +67,7 @@ app.get('/move', (req, res) => {
  * 2 -> 'O'
  */
 function convertirTablero(board) {
-  return board.map(row => 
+  return board.map(row =>
     row.map(cell => {
       if (cell === 0) return '';
       if (cell === 1) return 'X';
@@ -98,42 +78,17 @@ function convertirTablero(board) {
 }
 
 /**
- * Encuentra posiciones vacías en el tablero
- */
-function posicionesVacias(board) {
-  const vacias = [];
-  for (let row = 0; row < 5; row++) {
-    for (let col = 0; col < 5; col++) {
-      if (board[row][col] === '') {
-        vacias.push({ row, col });
-      }
-    }
-  }
-  return vacias;
-}
-
-/**
- * FUNCIÓN DE RESPALDO: Elegir posición aleatoria
- * (Solo se usa si el bot falla)
- */
-function elegirPosicion(posiciones) {
-  const indiceAleatorio = Math.floor(Math.random() * posiciones.length);
-  return posiciones[indiceAleatorio];
-}
-
-/**
  * ENDPOINT DE BIENVENIDA
- * GET /
  */
 app.get('/', (req, res) => {
   res.json({
     mensaje: '¡Hola! 👋 Estoy funcionando correctamente',
     nombre: 'Bot de Tateti 5x5',
-    version: '1.0.0',
+    version: '1.0.1',
     estado: 'Activo ✅',
     bot: 'Minimax con poda alfa-beta activado 🤖',
     endpoints: {
-      jugada: 'GET /move?board=[[...]]&symbol=1',
+      jugada: 'GET /move?board=[[...]]&player=1',
       salud: 'GET /health'
     }
   });
@@ -141,7 +96,6 @@ app.get('/', (req, res) => {
 
 /**
  * ENDPOINT DE HEALTH CHECK
- * GET /health
  */
 app.get('/health', (req, res) => {
   res.json({
@@ -153,7 +107,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Iniciar servidor (solo para desarrollo local)
+// Iniciar servidor (local)
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor de tateti 5x5 escuchando en el puerto ${PORT}`);
@@ -162,5 +116,5 @@ if (require.main === module) {
   });
 }
 
-// ✅ Para Vercel: exportar la app directamente
+// Para Vercel
 module.exports = app;
