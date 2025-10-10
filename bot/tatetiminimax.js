@@ -5,7 +5,7 @@
 
 const BOARD_SIZE = 5;
 const WIN_LENGTH = 4;
-const MAX_DEPTH = 4; // Profundidad máxima para Minimax
+const MAX_DEPTH = 3; // ✅ Reducido de 4 a 3 para evitar timeouts en Vercel
 
 // Valores heurísticos
 const HEURISTIC_VALUES = {
@@ -291,13 +291,18 @@ function getAllLines(board) {
 
 /**
  * Verificar ganador
+ * ✅ CORREGIDO: Verifica 4 en línea correctamente
  */
 function checkWinner(board) {
   const lines = getAllLines(board);
   
   for (const line of lines) {
-    if (line.every(c => c === 'X' && c !== '')) return 'X';
-    if (line.every(c => c === 'O' && c !== '')) return 'O';
+    // Debe tener exactamente 4 elementos del mismo símbolo (no vacío)
+    const allX = line.every(c => c === 'X');
+    const allO = line.every(c => c === 'O');
+    
+    if (allX && line[0] !== '') return 'X';
+    if (allO && line[0] !== '') return 'O';
   }
   
   return null;
