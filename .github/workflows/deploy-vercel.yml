@@ -1,4 +1,4 @@
-﻿name: Deploy to Vercel
+﻿name: Deploy to Vercel (Personal Project)
 
 on:
   push:
@@ -12,21 +12,24 @@ jobs:
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
+      # 1️⃣ Clonar el repo
       - uses: actions/checkout@v4
 
+      # 2️⃣ Configurar Node.js
       - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: "npm"
 
+      # 3️⃣ Instalar dependencias
       - name: Install dependencies
         run: npm ci
 
+      # 4️⃣ Ejecutar tests
       - name: Run tests
         run: npm test
 
-      - name: Build project
-        run: npx vercel build --prod --token $VERCEL_TOKEN
+      # 5️⃣ Desplegar directamente a Vercel (producción)
+      - name: Deploy to Vercel (production)
+        run: npx vercel deploy --prod --token $VERCEL_TOKEN --confirm
 
-      - name: Deploy to Vercel
-        run: npx vercel deploy --prebuilt --prod --token $VERCEL_TOKEN
