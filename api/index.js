@@ -1,13 +1,15 @@
 const express = require('express');
-const { getBestMove } = require('../bot/tatetiminimax'); // Ajusta según tu estructura
+const { getBestMove } = require('../bot/tatetiminimax'); // tu bot Minimax
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
 /**
- * ENDPOINT PRINCIPAL: /move
- * GET /move?board=[...25 valores...]&player=1
+ * ENDPOINT PRINCIPAL - GET /move?board=[...]&player=1
+ * El árbitro envía:
+ *  - board: array plano de 25 posiciones
+ *  - player: 1 o 2
  */
 app.get('/move', (req, res) => {
   try {
@@ -18,20 +20,12 @@ app.get('/move', (req, res) => {
       return res.status(400).json({ error: 'Parametro board requerido' });
     }
 
-    // Si llega como array, convertir a string JSON
     if (Array.isArray(boardParam)) {
-      boardParam = JSON.stringify(boardParam);
+      boardParam = boardParam[0]; // por si llega repetido
     }
 
-    // Parsear JSON
-    let board;
-    try {
-      board = JSON.parse(boardParam);
-    } catch {
-      return res.status(400).json({ error: 'Parametro board inválido, debe ser JSON plano 25 celdas' });
-    }
+    const board = JSON.parse(boardParam);
 
-    // Validar tamaño
     if (!Array.isArray(board) || board.length !== 25) {
       return res.status(400).json({ error: 'El tablero debe ser un array plano de 25 celdas' });
     }
@@ -42,17 +36,24 @@ app.get('/move', (req, res) => {
       board5x5.push(board.slice(i * 5, i * 5 + 5));
     }
 
-    // Símbolo del bot
+    // Determinar símbolo del bot
     const botSymbol = playerId === 1 ? 'X' : 'O';
     const boardForBot = convertirTablero(board5x5);
 
     // Calcular mejor movimiento
     const move = getBestMove(boardForBot, botSymbol);
 
-    // Convertir a índice lineal para el árbitro
+    // Convertir a índice lineal (0-24) para el árbitro
     const linearMove = move.row * 5 + move.col;
 
+    // Validar movimiento
+    if (linearMove < 0 || linearMove > 24 || board[linearMove] !== 0) {
+      console.error("Movimiento inválido detectado por el bot", move, linearMove, board);
+      return res.status(500).json({ error: 'Bot devolvió movimiento inválido', move });
+    }
+
     return res.json({ move: linearMove });
+
   } catch (error) {
     console.error("Error en /move:", error.message);
     return res.status(500).json({ error: 'Error al calcular movimiento', detalles: error.message });
@@ -87,7 +88,7 @@ app.get('/', (req, res) => {
     estado: 'Activo ✅',
     bot: 'Minimax con poda alfa-beta activado 🤖',
     endpoints: {
-      jugada: 'GET /move?board=[...25 valores...]&player=1',
+      jugada: 'GET /move?board=[[...]]&player=1',
       salud: 'GET /health'
     }
   });
@@ -106,7 +107,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Iniciar servidor local
+// Iniciar servidor (local)
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor de tateti 5x5 escuchando en el puerto ${PORT}`);
@@ -115,5 +116,5 @@ if (require.main === module) {
   });
 }
 
-// Para Vercel u otros hosts
+// Para Vercel
 module.exports = app;
