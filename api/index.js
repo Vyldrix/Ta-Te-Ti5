@@ -5,7 +5,7 @@ const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
 
-// ✅ CORS para permitir peticiones desde otros dominios
+// CORS
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -16,73 +16,59 @@ app.use((req, res, next) => {
   next();
 });
 
-/**
- * ENDPOINT ADAPTADO PARA EL ÁRBITRO
- * GET /move?board=[0,1,2,...]&player=1
- */
 app.get('/move', (req, res) => {
   try {
-    console.log('📥 Request recibida:', {
-      query: req.query,
-      url: req.url,
-      headers: req.headers
-    });
+    console.log('📥 Query recibida:', req.query);
 
     let boardParam = req.query.board;
     const playerParam = req.query.player;
 
     if (!boardParam || !playerParam) {
-      console.error('❌ Parámetros faltantes:', { boardParam, playerParam });
+      console.error('❌ Parámetros faltantes');
       return res.status(400).json({ 
-        error: 'Parámetros board y player requeridos',
-        received: { board: !!boardParam, player: !!playerParam }
+        error: 'Parámetros board y player requeridos'
       });
     }
 
-    // 🔧 Manejar caso donde board viene como array (bug de algunos proxies)
+    // Manejar array duplicado
     if (Array.isArray(boardParam)) {
-      console.log('⚠️ Board vino como array, tomando primer elemento');
       boardParam = boardParam[0];
     }
 
-    // Parsear el tablero
+    // Parsear tablero
     let boardFlat;
     try {
       boardFlat = JSON.parse(boardParam);
+      console.log('✅ Board parseado, length:', boardFlat.length);
     } catch (e) {
       console.error('❌ Error parseando board:', e.message);
       return res.status(400).json({ 
-        error: 'Formato de board inválido',
-        details: e.message,
-        received: boardParam.substring(0, 100)
+        error: 'Formato de board inválido: ' + e.message
       });
     }
 
-    // Validar longitud del tablero
     if (!Array.isArray(boardFlat) || boardFlat.length !== 25) {
-      console.error('❌ Tablero con longitud incorrecta:', boardFlat.length);
+      console.error('❌ Longitud incorrecta:', boardFlat.length);
       return res.status(400).json({ 
-        error: 'El tablero debe tener 25 elementos (5x5)',
-        received: boardFlat.length
+        error: `El tablero debe tener 25 elementos, tiene ${boardFlat.length}`
       });
     }
 
     const playerId = parseInt(playerParam, 10);
     if (![1, 2].includes(playerId)) {
-      console.error('❌ Player ID inválido:', playerParam);
+      console.error('❌ Player inválido:', playerParam);
       return res.status(400).json({ 
-        error: 'Player debe ser 1 o 2',
-        received: playerParam
+        error: 'Player debe ser 1 o 2, recibido: ' + playerParam
       });
     }
 
-    // Convertir array plano a matriz 5x5
+    // Convertir a 5x5
     const board5x5 = [];
     for (let i = 0; i < 5; i++) {
       board5x5.push(boardFlat.slice(i * 5, i * 5 + 5));
     }
 
-    // Convertir números a símbolos
+    // Convertir a símbolos
     const boardForBot = board5x5.map(row => 
       row.map(cell => {
         if (cell === 0) return '';
@@ -92,114 +78,77 @@ app.get('/move', (req, res) => {
       })
     );
 
-    // Determinar símbolo del bot
     const botSymbol = playerId === 1 ? 'X' : 'O';
+    console.log(`🤖 Calculando para ${botSymbol}...`);
 
-    console.log(`🤖 Calculando movimiento para ${botSymbol}...`);
-
-    // Obtener la mejor jugada
+    // Calcular movimiento
     const bestMove = getBestMove(boardForBot, botSymbol);
+    console.log('🎯 Bot devolvió:', bestMove);
 
     if (!bestMove || typeof bestMove.row !== 'number' || typeof bestMove.col !== 'number') {
-      console.error('❌ Bot devolvió movimiento inválido:', bestMove);
+      console.error('❌ Movimiento del bot inválido:', bestMove);
       
-      // Fallback: buscar primera casilla disponible
-      const available = [];
-      for (let i = 0; i < boardFlat.length; i++) {
-        if (boardFlat[i] === 0) available.push(i);
-      }
-      
-      if (available.length === 0) {
-        return res.status(400).json({ error: 'No hay movimientos disponibles' });
-      }
-
-      console.log('⚠️ Usando fallback:', available[0]);
-      return res.json({ move: available[0], fallback: true });
-    }
-
-    // Convertir coordenadas a índice lineal
-    const moveLineal = bestMove.row * 5 + bestMove.col;
-
-    // Validar que la casilla esté vacía
-    if (boardFlat[moveLineal] !== 0) {
-      console.error('❌ Bot intentó jugar en casilla ocupada:', moveLineal, boardFlat[moveLineal]);
-      
-      // Buscar alternativa
-      const available = [];
-      for (let i = 0; i < boardFlat.length; i++) {
-        if (boardFlat[i] === 0) available.push(i);
-      }
-      
+      // Fallback
+      const available = boardFlat.map((v, i) => v === 0 ? i : -1).filter(i => i !== -1);
       if (available.length > 0) {
-        console.log('⚠️ Usando casilla alternativa:', available[0]);
-        return res.json({ move: available[0], fallback: true });
+        const fallbackMove = available[0];
+        console.log('⚠️ Usando fallback:', fallbackMove);
+        return res.json({ move: fallbackMove });
       }
-
-      return res.status(400).json({ error: 'No hay movimientos válidos disponibles' });
+      
+      return res.status(500).json({ error: 'Bot no pudo calcular movimiento' });
     }
 
-    console.log(`✅ Movimiento calculado: ${moveLineal} (fila ${bestMove.row}, col ${bestMove.col})`);
+    const moveLineal = bestMove.row * 5 + bestMove.col;
+    console.log(`📤 Enviando move: ${moveLineal} (row:${bestMove.row}, col:${bestMove.col})`);
 
-    // Respuesta en formato esperado por el árbitro
-    return res.json({ 
-      move: moveLineal
-    });
+    // Validar casilla vacía
+    if (boardFlat[moveLineal] !== 0) {
+      console.error('❌ Casilla ocupada:', moveLineal, 'valor:', boardFlat[moveLineal]);
+      
+      const available = boardFlat.map((v, i) => v === 0 ? i : -1).filter(i => i !== -1);
+      if (available.length > 0) {
+        console.log('⚠️ Usando alternativa:', available[0]);
+        return res.json({ move: available[0] });
+      }
+      
+      return res.status(500).json({ error: 'No hay movimientos válidos' });
+    }
+
+    // ✅ Respuesta final
+    const response = { move: moveLineal };
+    console.log('✅ Respuesta final:', JSON.stringify(response));
+    
+    return res.json(response);
 
   } catch (error) {
-    console.error('💥 Error fatal en /move:', error);
+    console.error('💥 Error fatal:', error);
     return res.status(500).json({ 
-      error: 'Error interno del servidor',
-      details: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: 'Error interno: ' + error.message
     });
   }
 });
 
-/**
- * ENDPOINT DE BIENVENIDA
- */
 app.get('/', (req, res) => {
   res.json({
-    mensaje: '🤖 Bot de Tateti 5x5 activo',
-    nombre: 'Minimax Bot',
-    version: '2.0.1',
-    estado: 'Activo ✅',
-    compatibilidad: 'Adaptado para el árbitro Ta-Te-Ti',
+    mensaje: '🤖 Bot Tateti 5x5',
+    version: '2.0.2',
+    estado: 'Activo',
     endpoints: {
-      jugada: 'GET /move?board=[...]&player=1',
-      salud: 'GET /health'
-    },
-    formato: {
-      entrada: 'board=[0,1,2,...,24] (array plano)',
-      salida: '{ move: 12 } (índice lineal 0-24)'
-    },
-    ejemplo: `/move?board=${encodeURIComponent('[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]')}&player=1`
+      move: '/move?board=[...]&player=1',
+      health: '/health'
+    }
   });
 });
 
-/**
- * ENDPOINT DE HEALTH CHECK
- */
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    name: 'Bot Tateti 5x5',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-    memory: process.memoryUsage(),
-    version: '2.0.1'
-  });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Iniciar servidor (solo para desarrollo local)
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`🚀 Bot escuchando en puerto ${PORT}`);
-    console.log(`✅ Listo en http://localhost:${PORT}`);
-    console.log(`🎮 Endpoint: http://localhost:${PORT}/move`);
-    console.log(`📝 Logs habilitados para debugging`);
+    console.log(`🚀 Bot en puerto ${PORT}`);
   });
 }
 
-// Para Vercel
 module.exports = app;
