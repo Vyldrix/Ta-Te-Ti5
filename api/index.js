@@ -16,7 +16,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// 🎮 ENDPOINT PRINCIPAL
 app.get('/move', (req, res) => {
   try {
     let boardParam = req.query.board;
@@ -54,11 +53,13 @@ app.get('/move', (req, res) => {
       });
     }
 
+    // Convertir a matriz 5x5
     const board5x5 = [];
     for (let i = 0; i < 5; i++) {
       board5x5.push(boardFlat.slice(i * 5, i * 5 + 5));
     }
 
+    // Convertir a símbolos
     const boardForBot = board5x5.map(row => 
       row.map(cell => {
         if (cell === 0) return '';
@@ -69,50 +70,50 @@ app.get('/move', (req, res) => {
     );
 
     const botSymbol = playerId === 1 ? 'X' : 'O';
+
+    // Calcular movimiento
     const bestMove = getBestMove(boardForBot, botSymbol);
 
     if (!bestMove || typeof bestMove.row !== 'number' || typeof bestMove.col !== 'number') {
+      // Fallback
       const available = boardFlat.map((v, i) => v === 0 ? i : -1).filter(i => i !== -1);
       if (available.length > 0) {
-        return res.json({ move: available[0] });
+        return res.json({ move: available[0] }); // ✅ "move"
       }
       return res.status(500).json({ error: 'No se pudo calcular movimiento' });
     }
 
     const moveLineal = bestMove.row * 5 + bestMove.col;
 
+    // Validar casilla vacía
     if (boardFlat[moveLineal] !== 0) {
       const available = boardFlat.map((v, i) => v === 0 ? i : -1).filter(i => i !== -1);
       if (available.length > 0) {
-        return res.json({ move: available[0] });
+        return res.json({ move: available[0] }); // ✅ "move"
       }
       return res.status(500).json({ error: 'No hay movimientos válidos' });
     }
 
+    // ✅ Respuesta principal - SIEMPRE "move"
     return res.json({ move: moveLineal });
 
   } catch (error) {
+    console.error('Error:', error.message);
     return res.status(500).json({ 
       error: 'Error interno del servidor'
     });
   }
 });
 
-// 🏠 HOMEPAGE
 app.get('/', (req, res) => {
   res.json({
-    nombre: '🤖 Bot Tateti 5x5',
+    mensaje: '🤖 Bot Tateti 5x5',
     version: '2.0.3',
-    estado: '✅ Activo',
-    endpoints: {
-      move: '/move?board=[...]&player=1',
-      health: '/health'
-    },
-    ejemplo: '/move?board=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]&player=1'
+    estado: 'Activo ✅',
+    formato: 'Devuelve { "move": N } donde N es 0-24'
   });
 });
 
-// 💚 HEALTH CHECK
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok',
@@ -120,22 +121,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 🧩 Evitar spam de favicon en logs (opcional pero recomendado)
-app.get('/favicon.ico', (req, res) => res.status(204).end());
-
-// 🚫 404 para rutas no definidas (opcional)
-app.use((req, res) => {
-  res.status(404).json({
-    error: 'Endpoint no encontrado',
-    disponibles: ['/', '/move', '/health']
-  });
-});
-
-// 🚀 Iniciar servidor (solo local)
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`🚀 Bot escuchando en puerto ${PORT}`);
-    console.log(`✅ http://localhost:${PORT}`);
+    console.log(`🚀 Bot en puerto ${PORT}`);
   });
 }
 
