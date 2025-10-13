@@ -1,56 +1,101 @@
-﻿# Tateti Random
+# Ta-Te-Ti 5x5: La Batalla de 4 en Línea
 
-API sencilla en Node.js que devuelve un movimiento aleatorio para un tablero de ta-te-ti.
+## 🎯 Descripción del Proyecto
 
-## Requisitos previos
-- Node.js 18 o superior.
-- Cuenta en Vercel con un proyecto (puede ser creado desde el dashboard o con el comando vercel link).
-- Acceso de administrador al repositorio en GitHub para crear *secrets*.
+Este proyecto es una **API sencilla en Node.js** diseñada para el juego de Ta-Te-Ti (Tic-Tac-Toe) en un tablero de **5x5**. Su función principal es recibir el estado actual del tablero y devolver un movimiento aleatorio válido para el siguiente turno.
 
-## Instalacion local
-1. Clonar el repositorio y situarse en la raiz.
-2. Instalar las dependencias con `npm install`.
-3. Ejecutar la bateria de pruebas con `npm test`.
-4. Levantar el servidor local con `npm start` y consumir el endpoint `GET /move?board=[...]`.
+### 🆕 Novedades de la Versión 5x5
 
-## Despliegue continuo en Vercel
-Cada *push* a la rama `main` ejecuta el flujo definido en `.github/workflows/deploy-vercel.yml`. Este flujo instala dependencias, corre las pruebas y despliega en Vercel usando la CLI oficial. Para que funcione, sigue estos pasos una sola vez:
+A diferencia del Ta-Te-Ti clásico, este juego utiliza una matriz más grande y tiene una nueva condición de victoria:
+* **Tamaño del Tablero:** $5 \times 5$ (25 casillas).
+* **Condición de Victoria:** Se gana al conseguir **4 fichas en línea** (horizontal, vertical o diagonal).
 
-### 1. Autenticarse y vincular el proyecto en Vercel
-```bash
-npm install --global vercel    (este paso instala vecel en tu máquina)
-vercel login  (este paso pide que hagas ENTER. Con eso te abre un browser y espera a que lo autorices)
-vercel link
-```
-El comando `vercel link` crea la carpeta `.vercel/` (no la subas al repositorio) con el archivo `project.json` que contiene `orgId` y `projectId`.
+### 🌐 Demo en Vivo
 
-### 2. Crear un token de acceso
-Genera un token permanente con `vercel tokens create tateti-ci` o desde el dashboard (Account Settings > Tokens). 
-Yo lo creé con scope completo, y sin expirar. Lo guardé en un archivo .private que no se sube al git
-Guarda el valor; solo se muestra una vez.
+Puedes ver una demostración del proyecto desplegado en Vercel:
+[ta-te-ti5.vercel.app](https://ta-te-ti5.vercel.app)
 
-### 3. Configurar *GitHub Secrets*
-En GitHub entra a **Settings > Secrets and variables > Actions** y agrega los siguientes secretos:
-- `VERCEL_TOKEN`: el token generado en el paso anterior.
-- `VERCEL_ORG_ID`: valor `orgId` del archivo `.vercel/project.json`.
-- `VERCEL_PROJECT_ID`: valor `projectId` del archivo `.vercel/project.json`.
+## 💻 Tecnologías Utilizadas
 
-Si tu aplicacion necesita variables de entorno, definalas en Vercel (`vercel env add` o desde el dashboard) o agrega pasos adicionales en el workflow.
+* **Lenguaje:** JavaScript
+* **Plataforma:** Node.js (v18 o superior)
+* **Pruebas:** Jest
+* **Despliegue:** Vercel
 
-### 4. Disparar el workflow a mano (no debería hacer falta con GitHub Actions)
-Con los secretos configurados, haz *push* a `main`. GitHub Actions ejecuta:
-1. `npm ci`
-2. `npm test`
-3. `npx vercel pull --yes --environment=production`
-4. `npx vercel build --prod`
-5. `npx vercel deploy --prebuilt --prod`
+## ⚙️ Instalación Local
 
-Al finalizar vas a ver la URL de despliegue en la pestana **Actions** del repositorio y en el dashboard de Vercel.
+### Requisitos Previos
 
-## Personalizacion
-- Para desplegar desde otra rama, cambia la seccion `on.push.branches` del workflow.
-- Si deseas saltar las pruebas antes de desplegar, elimina el paso "Run tests" en el YAML.
+* [Node.js](https://nodejs.org/) (versión 18 o superior).
 
-## Scripts utiles
-- `npm start`: inicia el servidor.
-- `npm test`: ejecuta Jest.
+### Pasos
+
+1.  Clona el repositorio:
+    ```bash
+    git clone [https://github.com/Vyldrix/Ta-Te-Ti5.git](https://github.com/Vyldrix/Ta-Te-Ti5.git)
+    cd Ta-Te-Ti5
+    ```
+2.  Instala las dependencias necesarias:
+    ```bash
+    npm install
+    ```
+3.  Opcional: Ejecuta la batería de pruebas para el bot:
+    ```bash
+    npm test
+    ```
+4.  Levanta el servidor local:
+    ```bash
+    npm start
+    ```
+
+## 🚀 Uso de la API
+
+Una vez que el servidor esté en funcionamiento (local o desplegado), puedes consumir el *endpoint* para obtener un movimiento aleatorio.
+
+* **Método:** `GET`
+* **Ruta:** `/move`
+* **Parámetro de consulta:** `board`
+
+### 📋 Especificación del Parámetro `board`
+
+La consulta requiere el parámetro `board`, que debe ser una cadena de **25 caracteres** (5x5) representando el estado actual del tablero, de izquierda a derecha y de arriba abajo.
+
+* `X`: Casilla ocupada por el jugador X.
+* `O`: Casilla ocupada por el jugador O.
+* `-`: Casilla vacía.
+
+**Ejemplo de solicitud (Tablero de 25 caracteres):**
+/move?board=X------------------------
+*(Representa un tablero 5x5 con solo la primera casilla ocupada por 'X').*
+
+## 📦 Despliegue Continuo en Vercel
+
+El proyecto utiliza **GitHub Actions** para implementar un flujo de **Despliegue Continuo** en Vercel, definido en el archivo `.github/workflows/deploy-vercel.yml`. Cada *push* a la rama `main` dispara el flujo que instala dependencias, corre las pruebas y despliega la aplicación.
+
+### Configuración Inicial (Única vez)
+
+Para que el despliegue funcione automáticamente, debes configurar las credenciales de Vercel en tu repositorio de GitHub.
+
+1.  **Instala y vincula Vercel localmente:**
+    ```bash
+    npm install --global vercel
+    vercel login
+    vercel link
+    ```
+    El comando `vercel link` crea el archivo `.vercel/project.json` con tu `orgId` y `projectId`.
+
+2.  **Crea un Token de Acceso en Vercel:**
+    Genera un token permanente (ej: `vercel tokens create tateti-ci`) o desde la configuración de tu cuenta en el dashboard de Vercel. **Guarda el valor, solo se muestra una vez.**
+
+3.  **Configura Secretos en GitHub:**
+    En tu repositorio de GitHub, navega a **Settings > Secrets and variables > Actions** y añade los siguientes secretos:
+    * `VERCEL_TOKEN`: El token generado.
+    * `VERCEL_ORG_ID`: El valor de `orgId` de `.vercel/project.json`.
+    * `VERCEL_PROJECT_ID`: El valor de `projectId` de `.vercel/project.json`.
+
+## 🛠️ Scripts Útiles
+
+| Script | Descripción |
+| :--- | :--- |
+| `npm start` | Inicia el servidor Node.js. |
+| `npm test` | Ejecuta la batería de pruebas utilizando Jest. |
