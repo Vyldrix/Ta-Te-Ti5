@@ -98,4 +98,4 @@ Para que el despliegue funcione automáticamente, debes configurar las credencia
 | Script | Descripción |
 | :--- | :--- |
 | `npm start` | Inicia el servidor Node.js. |
-| `npm test` | Ejecuta la batería de pruebas utilizando Jest. |
+| `npm test` | Ejecuta la batería de pruebas utilizando Jest. |.
