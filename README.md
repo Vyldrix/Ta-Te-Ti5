@@ -1,4 +1,4 @@
-# Ta-Te-Ti 5x5: La Batalla de 4 en Línea.
+# Ta-Te-Ti 5x5: La Batalla de 4 en Línea
 
 ## 🎯 Descripción del Proyecto
 
